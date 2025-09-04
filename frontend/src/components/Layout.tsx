@@ -20,7 +20,7 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
                 <span className="text-white font-bold text-sm">🐾</span>
               </div>
               <span className="text-xl font-semibold text-orange-800">
-                VetHome
+                VetCare
               </span>
             </Link>
 
@@ -125,7 +125,7 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             <div>
-              <h3 className="text-lg font-semibold mb-4">VetHome</h3>
+              <h3 className="text-lg font-semibold mb-4">VetCare</h3>
               <p className="text-orange-200 text-sm">
                 Cuidado veterinario profesional en la comodidad de tu hogar.
                 Nuestros veterinarios certificados brindan atención de calidad
@@ -136,7 +136,7 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
               <h3 className="text-lg font-semibold mb-4">Contacto</h3>
               <div className="text-orange-200 text-sm space-y-2">
                 <p>📞 Línea de atención: +57 300 123 4567</p>
-                <p>📧 Email: info@vethome.com</p>
+                <p>📧 Email: info@vetcare.com</p>
                 <p>🕒 Disponible 24/7 para emergencias</p>
               </div>
             </div>
@@ -153,7 +153,7 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
           </div>
           <div className="border-t border-orange-700 mt-8 pt-8 text-center text-orange-200 text-sm">
             <p>
-              &copy; 2025 VetHome. Todos los derechos reservados. Cuidando a tus
+              &copy; 2025 VetCare. Todos los derechos reservados. Cuidando a tus
               mascotas con amor.
             </p>
           </div>

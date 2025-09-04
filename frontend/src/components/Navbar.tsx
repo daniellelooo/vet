@@ -1,6 +1,6 @@
 import React from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { useAuth } from "../context/AuthContext";
+import { useAuth } from "../hooks/useAuth";
 
 const Navbar: React.FC = () => {
   const { user, logout } = useAuth();
@@ -17,7 +17,7 @@ const Navbar: React.FC = () => {
         <div className="flex justify-between items-center h-16">
           {/* Logo */}
           <Link to="/" className="flex items-center">
-            <div className="text-2xl font-bold text-orange-600">🐾 VetHome</div>
+            <div className="text-2xl font-bold text-orange-600">🐾 VetCare</div>
           </Link>
 
           {/* Menu Items */}

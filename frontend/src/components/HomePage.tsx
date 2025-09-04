@@ -17,7 +17,7 @@ const HomePage: React.FC = () => {
               </div>
             </div>
             <h1 className="text-6xl md:text-7xl font-bold mb-8 text-gray-800 leading-tight">
-              Veterinaria
+              VetCare
               <span className="block bg-gradient-to-r from-orange-500 to-amber-500 bg-clip-text text-transparent">
                 a Domicilio
               </span>
