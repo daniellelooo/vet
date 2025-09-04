@@ -7,13 +7,13 @@ interface Pet {
   name: string;
   species: string;
   breed: string;
-  age: number;
-  weight: number;
-  color: string;
-  medical_history: string;
-  vaccinations: string;
-  allergies: string;
+  gender?: string;
+  date_of_birth?: string;
+  weight?: number;
+  color?: string;
+  medical_history?: string;
   created_at: string;
+  updated_at?: string;
 }
 
 const PetsPage: React.FC = () => {
@@ -29,12 +29,11 @@ const PetsPage: React.FC = () => {
     name: "",
     species: "",
     breed: "",
-    age: "",
+    gender: "",
+    date_of_birth: "",
     weight: "",
     color: "",
     medical_history: "",
-    vaccinations: "",
-    allergies: "",
   });
 
   useEffect(() => {
@@ -84,9 +83,14 @@ const PetsPage: React.FC = () => {
           Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({
-          ...formData,
-          age: parseInt(formData.age),
-          weight: parseFloat(formData.weight),
+          name: formData.name,
+          species: formData.species,
+          breed: formData.breed,
+          gender: formData.gender,
+          date_of_birth: formData.date_of_birth,
+          weight: formData.weight ? parseFloat(formData.weight) : null,
+          color: formData.color,
+          medical_history: formData.medical_history,
         }),
       });
 
@@ -110,12 +114,11 @@ const PetsPage: React.FC = () => {
       name: pet.name,
       species: pet.species,
       breed: pet.breed,
-      age: pet.age.toString(),
-      weight: pet.weight.toString(),
-      color: pet.color,
+      gender: pet.gender || "",
+      date_of_birth: pet.date_of_birth || "",
+      weight: pet.weight?.toString() || "",
+      color: pet.color || "",
       medical_history: pet.medical_history || "",
-      vaccinations: pet.vaccinations || "",
-      allergies: pet.allergies || "",
     });
     setShowForm(true);
   };
@@ -149,15 +152,26 @@ const PetsPage: React.FC = () => {
       name: "",
       species: "",
       breed: "",
-      age: "",
+      gender: "",
+      date_of_birth: "",
       weight: "",
       color: "",
       medical_history: "",
-      vaccinations: "",
-      allergies: "",
     });
     setEditingPet(null);
     setError("");
+  };
+
+  const calculateAge = (dateOfBirth: string) => {
+    if (!dateOfBirth) return "N/A";
+    const today = new Date();
+    const birthDate = new Date(dateOfBirth);
+    let age = today.getFullYear() - birthDate.getFullYear();
+    const monthDiff = today.getMonth() - birthDate.getMonth();
+    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+      age--;
+    }
+    return age;
   };
 
   const getPetIcon = (species: string) => {
@@ -292,19 +306,32 @@ const PetsPage: React.FC = () => {
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Edad (años) *
+                    Género
+                  </label>
+                  <select
+                    value={formData.gender}
+                    onChange={(e) =>
+                      setFormData({ ...formData, gender: e.target.value })
+                    }
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+                  >
+                    <option value="">Seleccionar género</option>
+                    <option value="macho">Macho</option>
+                    <option value="hembra">Hembra</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Fecha de Nacimiento
                   </label>
                   <input
-                    type="number"
-                    value={formData.age}
+                    type="date"
+                    value={formData.date_of_birth}
                     onChange={(e) =>
-                      setFormData({ ...formData, age: e.target.value })
+                      setFormData({ ...formData, date_of_birth: e.target.value })
                     }
-                    required
-                    min="0"
-                    max="30"
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
-                    placeholder="Edad en años"
                   />
                 </div>
 
@@ -357,36 +384,6 @@ const PetsPage: React.FC = () => {
                   rows={3}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
                   placeholder="Cirugías, enfermedades previas, tratamientos..."
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Vacunas Aplicadas
-                </label>
-                <textarea
-                  value={formData.vaccinations}
-                  onChange={(e) =>
-                    setFormData({ ...formData, vaccinations: e.target.value })
-                  }
-                  rows={2}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
-                  placeholder="Lista de vacunas aplicadas y fechas..."
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Alergias y Sensibilidades
-                </label>
-                <textarea
-                  value={formData.allergies}
-                  onChange={(e) =>
-                    setFormData({ ...formData, allergies: e.target.value })
-                  }
-                  rows={2}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
-                  placeholder="Alergias conocidas, medicamentos que no tolera..."
                 />
               </div>
 
@@ -467,14 +464,24 @@ const PetsPage: React.FC = () => {
                   </div>
 
                   <div className="space-y-2 text-sm text-gray-600">
-                    <div className="flex justify-between">
-                      <span>Edad:</span>
-                      <span>{pet.age} años</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span>Peso:</span>
-                      <span>{pet.weight} kg</span>
-                    </div>
+                    {pet.date_of_birth && (
+                      <div className="flex justify-between">
+                        <span>Edad:</span>
+                        <span>{calculateAge(pet.date_of_birth)} años</span>
+                      </div>
+                    )}
+                    {pet.gender && (
+                      <div className="flex justify-between">
+                        <span>Género:</span>
+                        <span className="capitalize">{pet.gender}</span>
+                      </div>
+                    )}
+                    {pet.weight && (
+                      <div className="flex justify-between">
+                        <span>Peso:</span>
+                        <span>{pet.weight} kg</span>
+                      </div>
+                    )}
                     {pet.color && (
                       <div className="flex justify-between">
                         <span>Color:</span>
@@ -487,14 +494,6 @@ const PetsPage: React.FC = () => {
                     <div className="mt-4 p-3 bg-blue-50 rounded-lg">
                       <p className="text-xs text-blue-800">
                         <strong>Historia médica:</strong> {pet.medical_history}
-                      </p>
-                    </div>
-                  )}
-
-                  {pet.allergies && (
-                    <div className="mt-2 p-3 bg-red-50 rounded-lg">
-                      <p className="text-xs text-red-800">
-                        <strong>Alergias:</strong> {pet.allergies}
                       </p>
                     </div>
                   )}

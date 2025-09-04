@@ -9,9 +9,27 @@ const insertSampleData = async () => {
     // Crear hash de contraseña para usuarios demo
     const demoPassword = await bcrypt.hash('demo123', 10);
 
+    // Usar transacción síncrona (SQLite requirement)
+    const transaction = db.transaction(() => {
+      // Deshabilitar foreign keys temporalmente para limpieza
+      db.exec('PRAGMA foreign_keys = OFF');
+      
+      // Limpiar datos en orden correcto (respetar dependencias)
+      console.log('🧹 Limpiando datos existentes...');
+      db.exec('DELETE FROM appointments');
+      db.exec('DELETE FROM pets');
+      db.exec('DELETE FROM users');
+      db.exec('DELETE FROM veterinarians');
+      db.exec('DELETE FROM services');
+      
+      // Reactivar foreign keys
+      db.exec('PRAGMA foreign_keys = ON');
+
+      console.log('👨‍⚕️ Insertando veterinarios...');
+
     // Insertar veterinarios
     const insertVeterinarian = db.prepare(`
-      INSERT OR REPLACE INTO veterinarians (
+      INSERT INTO veterinarians (
         first_name, last_name, email, phone, license_number, 
         specialization, years_experience, education, bio
       ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
@@ -43,7 +61,7 @@ const insertSampleData = async () => {
 
     // Insertar servicios
     const insertService = db.prepare(`
-      INSERT OR REPLACE INTO services (
+      INSERT INTO services (
         name, description, price, duration_minutes, category, requirements
       ) VALUES (?, ?, ?, ?, ?, ?)
     `);
@@ -62,11 +80,17 @@ const insertSampleData = async () => {
       insertService.run(...service);
     });
 
+    // Verificar IDs disponibles
+    const availableVets = db.prepare('SELECT id, first_name, last_name FROM veterinarians').all() as Array<{id: number, first_name: string, last_name: string}>;
+    const availableServices = db.prepare('SELECT id, name FROM services').all() as Array<{id: number, name: string}>;
+    
+    console.log('🔍 Veterinarios disponibles:', availableVets);
+    console.log('🔍 Servicios disponibles:', availableServices);
+
     // Insertar usuario demo
     const insertUser = db.prepare(`
-      INSERT OR REPLACE INTO users (
-        first_name, last_name, email, password_hash, phone, address, date_of_birth
-      ) VALUES (?, ?, ?, ?, ?, ?, ?)
+      INSERT INTO users (first_name, last_name, email, password_hash, phone, address)
+      VALUES (?, ?, ?, ?, ?, ?)
     `);
 
     const userId = insertUser.run(
@@ -75,18 +99,17 @@ const insertSampleData = async () => {
       'maria@demo.com',
       demoPassword,
       '+57 300 123 4567',
-      'Calle 123 #45-67, Bogotá',
-      '1990-05-15'
+      'Calle 123 #45-67, Bogotá'
     ).lastInsertRowid;
 
     // Insertar mascota demo
     const insertPet = db.prepare(`
-      INSERT OR REPLACE INTO pets (
+      INSERT INTO pets (
         user_id, name, species, breed, gender, date_of_birth, weight, color, medical_history
       ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
     `);
 
-    insertPet.run(
+    const maxResult = insertPet.run(
       userId,
       'Max',
       'Perro',
@@ -97,8 +120,9 @@ const insertSampleData = async () => {
       'Dorado',
       'Vacunas al día. Sin problemas de salud conocidos. Última desparasitación: enero 2025.'
     );
+    const petMaxId = maxResult.lastInsertRowid as number;
 
-    insertPet.run(
+    const lunaResult = insertPet.run(
       userId,
       'Luna',
       'Gato',
@@ -109,6 +133,7 @@ const insertSampleData = async () => {
       'Blanco y negro',
       'Esterilizada. Vacunas completas. Tratamiento preventivo contra pulgas activo.'
     );
+    const petLunaId = lunaResult.lastInsertRowid as number;
 
     console.log('✅ Datos de ejemplo insertados exitosamente:');
     console.log('👨‍⚕️ 2 veterinarios creados');
@@ -116,8 +141,81 @@ const insertSampleData = async () => {
     console.log('👤 1 usuario demo creado (maria@demo.com / demo123)');
     console.log('🐕 2 mascotas demo creadas (Max y Luna)');
 
+    // Insertar citas de ejemplo
+    console.log('📅 Insertando citas de ejemplo...');
+    
+    // Obtener IDs de las mascotas demo
+    const pets = db.prepare('SELECT id, name FROM pets WHERE user_id = ?').all(userId) as Array<{id: number, name: string}>;
+    const petMax = pets.find(p => p.name === 'Max');
+    const petLuna = pets.find(p => p.name === 'Luna');
+
+    console.log('🔍 Mascotas encontradas:', pets);
+
+    if (!petMax || !petLuna) {
+      console.log('❌ No se encontraron las mascotas demo');
+      return;
+    }
+
+    const insertAppointment = db.prepare(`
+      INSERT INTO appointments (
+        user_id, pet_id, veterinarian_id, service_id,
+        appointment_date, appointment_time, status, payment_status,
+        address, notes
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `);
+
+    // Cita confirmada pendiente de pago (usando IDs encontrados)
+    insertAppointment.run(
+      userId, // user_id
+      petMax.id, // pet_id (Max)
+      availableVets[0].id, // veterinarian_id (Dr. Carlos - primer veterinario)
+      availableServices[0].id, // service_id (Consulta General - primer servicio)
+      '2025-09-10', // appointment_date
+      '14:00', // appointment_time
+      'confirmada', // status
+      'pending', // payment_status
+      'Carrera 15 #45-67, Apartamento 301, Bogotá', // address
+      'Revisión general para Max, ha estado un poco decaído últimamente' // notes
+    );
+
+    // Cita completada y pagada
+    insertAppointment.run(
+      userId, // user_id
+      petLuna.id, // pet_id (Luna)
+      availableVets[1].id, // veterinarian_id (Dra. Ana - segundo veterinario)
+      availableServices[1].id, // service_id (Vacunación - segundo servicio)
+      '2025-08-28', // appointment_date
+      '10:30', // appointment_time
+      'completada', // status
+      'paid', // payment_status
+      'Carrera 15 #45-67, Apartamento 301, Bogotá', // address
+      'Vacuna antirrábica aplicada exitosamente' // notes
+    );
+
+    // Cita programada
+    insertAppointment.run(
+      userId, // user_id
+      petMax.id, // pet_id (Max)
+      availableVets[0].id, // veterinarian_id (Dr. Carlos)
+      availableServices[2].id, // service_id (Desparasitación - tercer servicio)
+      '2025-09-15', // appointment_date
+      '16:00', // appointment_time
+      'programada', // status
+      'pending', // payment_status
+      'Carrera 15 #45-67, Apartamento 301, Bogotá', // address
+      'Desparasitación preventiva mensual' // notes
+    );
+
+    console.log('📅 3 citas de ejemplo creadas');
+
+    }); // Fin de la transacción
+
+    // Ejecutar la transacción
+    transaction();
+    console.log('✅ Transacción de datos de ejemplo completada');
+    
   } catch (error) {
-    console.error('❌ Error insertando datos de ejemplo:', error);
+    console.error('❌ Error en datos de ejemplo:', error);
   }
 };
 

@@ -92,6 +92,7 @@ const createTables = () => {
       appointment_date DATE NOT NULL,
       appointment_time TIME NOT NULL,
       status TEXT DEFAULT 'programada' CHECK(status IN ('programada', 'confirmada', 'en_progreso', 'completada', 'cancelada')),
+      payment_status TEXT DEFAULT 'pending' CHECK(payment_status IN ('pending', 'paid', 'refunded')),
       address TEXT,
       notes TEXT,
       total_amount REAL,
@@ -188,5 +189,22 @@ const createTables = () => {
   console.log('✅ Todas las tablas de la base de datos han sido creadas exitosamente');
 };
 
-export { db, createTables };
+// Función para verificar y agregar columnas faltantes
+const runMigrations = () => {
+  try {
+    // Verificar si la columna payment_status existe en appointments
+    const columns = db.prepare(`PRAGMA table_info(appointments)`).all();
+    const hasPaymentStatus = columns.some((col: any) => col.name === 'payment_status');
+    
+    if (!hasPaymentStatus) {
+      console.log('🔄 Agregando columna payment_status a la tabla appointments...');
+      db.exec(`ALTER TABLE appointments ADD COLUMN payment_status TEXT DEFAULT 'pending' CHECK(payment_status IN ('pending', 'paid', 'refunded'))`);
+      console.log('✅ Columna payment_status agregada exitosamente');
+    }
+  } catch (error) {
+    console.log('ℹ️ Las migraciones no son necesarias o ya se ejecutaron');
+  }
+};
+
+export { db, createTables, runMigrations };
 export default db;

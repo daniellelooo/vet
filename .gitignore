@@ -18,10 +18,14 @@ backend/dist/
 .env.test.local
 .env.production.local
 
-# Database
+# Database files
 *.db
+*.db-journal
+*.db-shm
+*.db-wal
 *.sqlite
 *.sqlite3
+database.sqlite
 backend/database.db
 
 # Logs
@@ -82,16 +86,32 @@ Thumbs.db
 *.bak
 *.backup
 
-# Test files
-test-*.js
-debug-*.js
+# PREVENT CREATION OF DEVELOPMENT SCRIPTS
+add-*.js
 check-*.js
+create-*.js
+debug-*.js
+final-*.js
+fix-*.js
+seed-*.js
+setup-*.js
+test-*.js
+update-*.js
 
-# Development utilities (keeping only essential ones)
-create-demo-user.js
-test-demo-login.js
-add-demo-pets.js
-add-sample-appointments.js
-check-and-add-data.js
-final-debug.js
-fix-appointment.js
+# Any standalone .js files in backend (except node_modules)
+backend/*.js
+!backend/node_modules/**
+
+# Next.js files (we're using React+Vite)
+next.config.js
+next.config.ts
+next-env.d.ts
+
+# Duplicate config files in root
+/tsconfig.json
+/tailwind.config.js
+/postcss.config.js
+/.eslintrc.json
+*.db-wal
+*.db-shm
+

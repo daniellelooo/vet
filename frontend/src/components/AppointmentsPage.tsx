@@ -11,6 +11,7 @@ interface Appointment {
   pet_name: string;
   pet_species: string;
   status: string;
+  payment_status?: string;
   notes: string;
   price: number;
 }
@@ -19,6 +20,15 @@ const AppointmentsPage: React.FC = () => {
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [selectedAppointment, setSelectedAppointment] = useState<Appointment | null>(null);
+  const [paymentData, setPaymentData] = useState({
+    cardNumber: "",
+    expiryDate: "",
+    cvv: "",
+    name: "",
+  });
+  const [isProcessing, setIsProcessing] = useState(false);
   const { user } = useAuth();
 
   useEffect(() => {
@@ -72,6 +82,104 @@ const AppointmentsPage: React.FC = () => {
       cancelada: "Cancelada",
     };
     return texts[status as keyof typeof texts] || status;
+  };
+
+  const handleConfirmAppointment = async (appointmentId: number) => {
+    try {
+      const token = localStorage.getItem("token");
+      const response = await fetch(
+        `http://localhost:3000/api/appointments/${appointmentId}/status`,
+        {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({ status: "confirmada" }),
+        }
+      );
+
+      if (response.ok) {
+        // Recargar las citas para mostrar el cambio
+        fetchAppointments();
+        alert("¡Cita confirmada exitosamente! Ahora puedes proceder al pago.");
+      } else {
+        alert("Error al confirmar la cita");
+      }
+    } catch (error) {
+      console.error("Error confirmando cita:", error);
+      alert("Error de conexión al confirmar la cita");
+    }
+  };
+
+  const handlePaymentClick = (appointment: Appointment) => {
+    setSelectedAppointment(appointment);
+    setShowPaymentModal(true);
+  };
+
+  const handlePaymentSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsProcessing(true);
+
+    try {
+      // Simulación de procesamiento de pago
+      await new Promise(resolve => setTimeout(resolve, 2000));
+
+      // Actualizar el payment_status en el backend
+      const token = localStorage.getItem("token");
+      const response = await fetch(
+        `http://localhost:3000/api/appointments/${selectedAppointment?.id}/payment`,
+        {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({ 
+            payment_status: "paid",
+            payment_method: "credit_card",
+            payment_amount: selectedAppointment?.price
+          }),
+        }
+      );
+
+      if (response.ok) {
+        alert(`¡Pago exitoso! Se han cobrado $${selectedAppointment?.price.toLocaleString()} COP`);
+        setShowPaymentModal(false);
+        setPaymentData({ cardNumber: "", expiryDate: "", cvv: "", name: "" });
+        fetchAppointments(); // Recargar citas
+      } else {
+        alert("Error al procesar el pago");
+      }
+    } catch (error) {
+      console.error("Error procesando pago:", error);
+      alert("Error al procesar el pago");
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
+  const formatCardNumber = (value: string) => {
+    const v = value.replace(/\s+/g, '').replace(/[^0-9]/gi, '');
+    const matches = v.match(/\d{4,16}/g);
+    const match = matches && matches[0] || '';
+    const parts = [];
+    for (let i = 0, len = match.length; i < len; i += 4) {
+      parts.push(match.substring(i, i + 4));
+    }
+    if (parts.length) {
+      return parts.join(' ');
+    } else {
+      return v;
+    }
+  };
+
+  const formatExpiryDate = (value: string) => {
+    const v = value.replace(/\s+/g, '').replace(/[^0-9]/gi, '');
+    if (v.length >= 2) {
+      return v.substring(0, 2) + '/' + v.substring(2, 4);
+    }
+    return v;
   };
 
   const formatDate = (dateString: string) => {
@@ -217,15 +325,38 @@ const AppointmentsPage: React.FC = () => {
 
                   {/* Action buttons based on status */}
                   <div className="mt-4 flex flex-wrap gap-2">
-                    {appointment.status === "pendiente" && (
-                      <span className="text-sm text-orange-600 bg-orange-50 px-3 py-1 rounded-full">
-                        ⏳ Esperando confirmación del veterinario
-                      </span>
+                    {appointment.status === "programada" && (
+                      <div className="flex gap-2 flex-wrap">
+                        <span className="text-sm text-orange-600 bg-orange-50 px-3 py-1 rounded-full">
+                          📅 Cita programada
+                        </span>
+                        <button
+                          onClick={() => handleConfirmAppointment(appointment.id)}
+                          className="text-sm text-blue-600 bg-blue-50 hover:bg-blue-100 px-3 py-1 rounded-full transition-colors border border-blue-200"
+                        >
+                          ✅ Confirmar Cita
+                        </button>
+                      </div>
                     )}
                     {appointment.status === "confirmada" && (
-                      <span className="text-sm text-blue-600 bg-blue-50 px-3 py-1 rounded-full">
-                        ✅ Cita confirmada - Te contactaremos pronto
-                      </span>
+                      <div className="flex gap-2 flex-wrap">
+                        <span className="text-sm text-blue-600 bg-blue-50 px-3 py-1 rounded-full">
+                          ✅ Cita confirmada - Te contactaremos pronto
+                        </span>
+                        {(!appointment.payment_status || appointment.payment_status === 'pending') && (
+                          <button
+                            onClick={() => handlePaymentClick(appointment)}
+                            className="text-sm text-emerald-600 bg-emerald-50 hover:bg-emerald-100 px-3 py-1 rounded-full transition-colors border border-emerald-200"
+                          >
+                            💳 Pagar Cita
+                          </button>
+                        )}
+                        {appointment.payment_status === 'paid' && (
+                          <span className="text-sm text-green-600 bg-green-50 px-3 py-1 rounded-full">
+                            💰 Pagado
+                          </span>
+                        )}
+                      </div>
                     )}
                     {appointment.status === "completada" && (
                       <div className="flex gap-2">
@@ -269,6 +400,135 @@ const AppointmentsPage: React.FC = () => {
             </div>
           </div>
         </div>
+
+        {/* Payment Modal */}
+        {showPaymentModal && selectedAppointment && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+            <div className="bg-white rounded-xl shadow-2xl max-w-md w-full max-h-[90vh] overflow-y-auto">
+              <div className="p-6">
+                <div className="flex justify-between items-center mb-6">
+                  <h3 className="text-xl font-bold text-gray-900">Pago de Cita</h3>
+                  <button
+                    onClick={() => setShowPaymentModal(false)}
+                    className="text-gray-400 hover:text-gray-600 text-2xl"
+                  >
+                    ×
+                  </button>
+                </div>
+
+                {/* Appointment Summary */}
+                <div className="bg-orange-50 rounded-lg p-4 mb-6">
+                  <h4 className="font-semibold text-gray-900 mb-2">Resumen de la Cita</h4>
+                  <div className="space-y-1 text-sm text-gray-600">
+                    <p><span className="font-medium">Servicio:</span> {selectedAppointment.service_name}</p>
+                    <p><span className="font-medium">Veterinario:</span> {selectedAppointment.veterinarian_name}</p>
+                    <p><span className="font-medium">Mascota:</span> {selectedAppointment.pet_name}</p>
+                    <p><span className="font-medium">Fecha:</span> {formatDate(selectedAppointment.appointment_date)}</p>
+                    <p className="text-lg font-bold text-orange-600 mt-2">
+                      Total: ${selectedAppointment.price.toLocaleString()} COP
+                    </p>
+                  </div>
+                </div>
+
+                {/* Payment Form */}
+                <form onSubmit={handlePaymentSubmit} className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Número de Tarjeta
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="1234 5678 9012 3456"
+                      value={paymentData.cardNumber}
+                      onChange={(e) => setPaymentData({
+                        ...paymentData,
+                        cardNumber: formatCardNumber(e.target.value)
+                      })}
+                      maxLength={19}
+                      required
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Fecha de Vencimiento
+                      </label>
+                      <input
+                        type="text"
+                        placeholder="MM/AA"
+                        value={paymentData.expiryDate}
+                        onChange={(e) => setPaymentData({
+                          ...paymentData,
+                          expiryDate: formatExpiryDate(e.target.value)
+                        })}
+                        maxLength={5}
+                        required
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        CVV
+                      </label>
+                      <input
+                        type="text"
+                        placeholder="123"
+                        value={paymentData.cvv}
+                        onChange={(e) => setPaymentData({
+                          ...paymentData,
+                          cvv: e.target.value.replace(/\D/g, '').slice(0, 4)
+                        })}
+                        maxLength={4}
+                        required
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Nombre del Titular
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="Como aparece en la tarjeta"
+                      value={paymentData.name}
+                      onChange={(e) => setPaymentData({
+                        ...paymentData,
+                        name: e.target.value
+                      })}
+                      required
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                    />
+                  </div>
+
+                  <div className="flex gap-3 mt-6">
+                    <button
+                      type="button"
+                      onClick={() => setShowPaymentModal(false)}
+                      className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
+                    >
+                      Cancelar
+                    </button>
+                    <button
+                      type="submit"
+                      disabled={isProcessing}
+                      className="flex-1 px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                    >
+                      {isProcessing ? 'Procesando...' : 'Pagar Ahora'}
+                    </button>
+                  </div>
+                </form>
+
+                <div className="mt-4 text-xs text-gray-500 text-center">
+                  🔒 Simulación de pago seguro - No se procesarán pagos reales
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
