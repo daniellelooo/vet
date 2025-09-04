@@ -383,7 +383,88 @@ app.use(
 
 ---
 
-## 📁 Estructura Detallada del Proyecto
+## � Middleware - Software Intermediario
+
+### ¿Qué es el Middleware?
+
+**Middleware** es un software que actúa como **"intermediario"** entre diferentes componentes de una aplicación. En el contexto de aplicaciones web, el middleware son **funciones que se ejecutan entre la petición HTTP y la respuesta**.
+
+### Flujo de Middleware
+```
+Cliente → Middleware 1 → Middleware 2 → Controlador → Middleware 3 → Respuesta
+```
+
+### Tipos de Middleware Implementados
+
+#### 🔐 Middleware de Autenticación (`auth.ts`)
+```typescript
+const authMiddleware = (req, res, next) => {
+  // 1. Extrae el token del header Authorization
+  // 2. Verifica si el token JWT es válido
+  // 3. Si es válido → continúa (next())
+  // 4. Si no es válido → devuelve error 401
+}
+```
+**Uso:** Protege rutas como `/api/appointments`, `/api/pets`
+
+#### ⚡ Middleware de Rate Limiting
+```typescript
+const rateLimiter = (maxRequests, windowMs) => {
+  // 1. Cuenta peticiones por IP
+  // 2. Si excede límite → error 429
+  // 3. Si está dentro del límite → continúa
+}
+```
+**Función:** Prevenir ataques de fuerza bruta y spam
+
+#### 📝 Middleware de Logging
+```typescript
+const requestLogger = (req, res, next) => {
+  // 1. Registra método, URL, IP
+  // 2. Mide tiempo de respuesta
+  // 3. Registra código de estado
+}
+```
+**Función:** Monitorear y debuggear la aplicación
+
+### Orden de Ejecución en VetCare
+
+```
+1. 🛡️  helmet()           → Headers de seguridad
+2. 🔒  securityHeaders     → Headers personalizados  
+3. ⚡  rateLimiter()       → Límite de peticiones (100/15min)
+4. 🌐  cors()             → Permitir conexiones frontend
+5. 📝  morgan()           → Logging de peticiones
+6. 📦  express.json()     → Parsear JSON
+7. 📦  express.urlencoded()→ Parsear formularios
+8. 🔐  authMiddleware     → Solo en rutas protegidas
+9. 🎯  Controlador        → Lógica de negocio
+```
+
+### Ejemplo Práctico: Login Flow
+```
+POST /api/auth/login
+     ↓
+1. helmet() → Agrega headers de seguridad
+2. rateLimiter() → Verifica límite de peticiones
+3. cors() → Permite petición desde localhost:5173
+4. morgan() → Log: "POST /api/auth/login - IP: 127.0.0.1"
+5. express.json() → Convierte body JSON a objeto
+6. authRoutes → Procesa credenciales de login
+     ↓
+Response: { token: "jwt_token", user: {...} }
+```
+
+### Ventajas del Middleware
+- **🔄 Reutilización:** Mismo middleware en múltiples rutas
+- **📦 Separación:** Cada middleware tiene función específica
+- **🔒 Seguridad:** Centraliza validaciones y autenticación
+- **📊 Monitoreo:** Facilita logging y métricas
+- **🛠️ Mantenibilidad:** Fácil agregar/quitar funcionalidades
+
+---
+
+## �📁 Estructura Detallada del Proyecto
 
 ### Estructura de Directorios con Rutas Absolutas
 
@@ -1437,6 +1518,15 @@ const validatePassword = (password: string): boolean => {
 - **Protocolo**: HTTP/HTTPS con JSON
 - **Autenticación**: JWT tokens
 - **CORS**: Configurado para permitir comunicación entre puertos
+
+#### Middleware Implementado
+
+- ✅ **Autenticación JWT** - Protección de rutas privadas
+- ✅ **Rate Limiting** - Prevención de ataques de fuerza bruta (100 req/15min)
+- ✅ **Request Logging** - Monitoreo de peticiones HTTP
+- ✅ **CORS** - Comunicación segura entre puertos
+- ✅ **Helmet** - Headers de seguridad HTTP
+- ✅ **Body Parsing** - Procesamiento de JSON y formularios
 
 #### Funcionalidades Principales
 
