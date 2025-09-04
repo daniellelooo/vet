@@ -1,84 +1,102 @@
-import React, { useState, useEffect } from "react";
-import { useAuth } from "../hooks/useAuth";
-import { Link } from "react-router-dom";
+// Importaciones necesarias para el componente
+import React, { useState, useEffect } from "react"; // React hooks para estado y efectos
+import { useAuth } from "../hooks/useAuth"; // Hook personalizado para autenticación
+import { Link } from "react-router-dom"; // Componente para navegación entre rutas
 
+// Interface que define la estructura de una cita veterinaria
 interface Appointment {
-  id: number;
-  service_name: string;
-  veterinarian_name: string;
-  veterinarian_specialization: string;
-  appointment_date: string;
-  pet_name: string;
-  pet_species: string;
-  status: string;
-  payment_status?: string;
-  notes: string;
-  price: number;
+  id: number; // Identificador único de la cita
+  service_name: string; // Nombre del servicio veterinario
+  veterinarian_name: string; // Nombre del veterinario asignado
+  veterinarian_specialization: string; // Especialización del veterinario
+  appointment_date: string; // Fecha y hora de la cita
+  pet_name: string; // Nombre de la mascota
+  pet_species: string; // Especie de la mascota (perro, gato, etc.)
+  status: string; // Estado de la cita (pendiente, confirmada, completada, cancelada)
+  payment_status?: string; // Estado del pago (opcional)
+  notes: string; // Notas adicionales de la cita
+  price: number; // Precio del servicio en COP
 }
 
+// Componente principal para gestión de citas veterinarias
 const AppointmentsPage: React.FC = () => {
-  const [appointments, setAppointments] = useState<Appointment[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
-  const [showPaymentModal, setShowPaymentModal] = useState(false);
+  // Estados para manejo de datos y UI
+  const [appointments, setAppointments] = useState<Appointment[]>([]); // Lista de citas del usuario
+  const [loading, setLoading] = useState(true); // Estado de carga
+  const [error, setError] = useState(""); // Mensajes de error
+  const [showPaymentModal, setShowPaymentModal] = useState(false); // Control del modal de pago
   const [selectedAppointment, setSelectedAppointment] =
-    useState<Appointment | null>(null);
-  const [paymentData, setPaymentData] = useState({
-    cardNumber: "",
-    expiryDate: "",
-    cvv: "",
-    name: "",
-  });
-  const [paymentMethod, setPaymentMethod] = useState<"credit_card" | "cash">("credit_card");
-  const [cashPaymentData, setCashPaymentData] = useState({
-    receivedAmount: "",
-    notes: "",
-  });
-  const [isProcessing, setIsProcessing] = useState(false);
-  const { user } = useAuth();
+    useState<Appointment | null>(null); // Cita seleccionada para pago
 
+  // Estados para formulario de pago con tarjeta
+  const [paymentData, setPaymentData] = useState({
+    cardNumber: "", // Número de tarjeta formateado (XXXX XXXX XXXX XXXX)
+    expiryDate: "", // Fecha de vencimiento (MM/AA)
+    cvv: "", // Código de seguridad
+    name: "", // Nombre del titular
+  });
+
+  // Estado para selección del método de pago
+  const [paymentMethod, setPaymentMethod] = useState<"credit_card" | "cash">(
+    "credit_card"
+  );
+
+  // Estados para formulario de pago en efectivo
+  const [cashPaymentData, setCashPaymentData] = useState({
+    receivedAmount: "", // Monto que recibirá el veterinario
+    notes: "", // Notas adicionales para el pago en efectivo
+  });
+
+  const [isProcessing, setIsProcessing] = useState(false); // Estado del procesamiento de pago
+  const { user } = useAuth(); // Usuario autenticado desde el contexto
+
+  // Efecto para cargar citas cuando el usuario esté disponible
   useEffect(() => {
     if (user) {
       fetchAppointments();
     }
   }, [user]);
 
+  // Función para obtener las citas del usuario desde el backend
   const fetchAppointments = async () => {
     try {
-      const token = localStorage.getItem("token");
+      const token = localStorage.getItem("token"); // Obtener token JWT del almacenamiento local
+      // Llamada HTTP GET al endpoint de citas del usuario autenticado
       const response = await fetch(
         "http://localhost:3000/api/appointments/my-appointments",
         {
           headers: {
-            Authorization: `Bearer ${token}`,
+            Authorization: `Bearer ${token}`, // Incluir token JWT para autenticación
           },
         }
       );
 
       if (response.ok) {
-        const data = await response.json();
-        setAppointments(data);
+        const data = await response.json(); // Parsear respuesta JSON
+        setAppointments(data); // Actualizar estado con las citas obtenidas
       } else {
-        setError("Error al cargar las citas");
+        setError("Error al cargar las citas"); // Manejar errores HTTP
       }
     } catch {
-      setError("Error de conexión");
+      setError("Error de conexión"); // Manejar errores de red
     } finally {
-      setLoading(false);
+      setLoading(false); // Finalizar estado de carga
     }
   };
 
+  // Función que retorna clases CSS según el estado de la cita
   const getStatusColor = (status: string) => {
     const colors = {
-      pendiente: "bg-yellow-100 text-yellow-800",
-      confirmada: "bg-blue-100 text-blue-800",
-      en_progreso: "bg-orange-100 text-orange-800",
-      completada: "bg-green-100 text-green-800",
-      cancelada: "bg-red-100 text-red-800",
+      pendiente: "bg-yellow-100 text-yellow-800", // Amarillo para pendientes
+      confirmada: "bg-blue-100 text-blue-800", // Azul para confirmadas
+      en_progreso: "bg-orange-100 text-orange-800", // Naranja para en progreso
+      completada: "bg-green-100 text-green-800", // Verde para completadas
+      cancelada: "bg-red-100 text-red-800", // Rojo para canceladas
     };
-    return colors[status as keyof typeof colors] || "bg-gray-100 text-gray-800";
+    return colors[status as keyof typeof colors] || "bg-gray-100 text-gray-800"; // Color por defecto
   };
 
+  // Función que convierte el estado de la cita a texto legible
   const getStatusText = (status: string) => {
     const texts = {
       pendiente: "Pendiente",
@@ -133,15 +151,25 @@ const AppointmentsPage: React.FC = () => {
     try {
       // Validaciones específicas por método de pago
       if (paymentMethod === "credit_card") {
-        if (!paymentData.cardNumber || !paymentData.expiryDate || !paymentData.cvv || !paymentData.name) {
+        if (
+          !paymentData.cardNumber ||
+          !paymentData.expiryDate ||
+          !paymentData.cvv ||
+          !paymentData.name
+        ) {
           alert("Por favor, completa todos los campos de la tarjeta");
           setIsProcessing(false);
           return;
         }
       } else if (paymentMethod === "cash") {
         const receivedAmount = parseFloat(cashPaymentData.receivedAmount);
-        if (!receivedAmount || receivedAmount < (selectedAppointment?.price || 0)) {
-          alert(`El monto recibido debe ser al menos $${selectedAppointment?.price?.toLocaleString()} COP`);
+        if (
+          !receivedAmount ||
+          receivedAmount < (selectedAppointment?.price || 0)
+        ) {
+          alert(
+            `El monto recibido debe ser al menos $${selectedAppointment?.price?.toLocaleString()} COP`
+          );
           setIsProcessing(false);
           return;
         }
@@ -166,9 +194,11 @@ const AppointmentsPage: React.FC = () => {
             payment_amount: selectedAppointment?.price,
             ...(paymentMethod === "cash" && {
               cash_received: parseFloat(cashPaymentData.receivedAmount),
-              cash_change: parseFloat(cashPaymentData.receivedAmount) - (selectedAppointment?.price || 0),
-              payment_notes: cashPaymentData.notes
-            })
+              cash_change:
+                parseFloat(cashPaymentData.receivedAmount) -
+                (selectedAppointment?.price || 0),
+              payment_notes: cashPaymentData.notes,
+            }),
           }),
         }
       );
@@ -179,9 +209,13 @@ const AppointmentsPage: React.FC = () => {
             `¡Pago con tarjeta exitoso! Se han cobrado $${selectedAppointment?.price.toLocaleString()} COP`
           );
         } else {
-          const change = parseFloat(cashPaymentData.receivedAmount) - (selectedAppointment?.price || 0);
+          const change =
+            parseFloat(cashPaymentData.receivedAmount) -
+            (selectedAppointment?.price || 0);
           alert(
-            `¡Pago en efectivo exitoso!\nTotal: $${selectedAppointment?.price.toLocaleString()} COP\nRecibido: $${parseFloat(cashPaymentData.receivedAmount).toLocaleString()} COP\nCambio: $${change.toLocaleString()} COP`
+            `¡Pago en efectivo exitoso!\nTotal: $${selectedAppointment?.price.toLocaleString()} COP\nRecibido: $${parseFloat(
+              cashPaymentData.receivedAmount
+            ).toLocaleString()} COP\nCambio: $${change.toLocaleString()} COP`
           );
         }
         setShowPaymentModal(false);
@@ -491,7 +525,9 @@ const AppointmentsPage: React.FC = () => {
 
                 {/* Payment Method Selection */}
                 <div className="mb-6">
-                  <h4 className="font-medium text-gray-900 mb-3">Método de Pago</h4>
+                  <h4 className="font-medium text-gray-900 mb-3">
+                    Método de Pago
+                  </h4>
                   <div className="grid grid-cols-2 gap-3">
                     <button
                       type="button"
@@ -505,7 +541,9 @@ const AppointmentsPage: React.FC = () => {
                       <div className="text-center">
                         <div className="text-2xl mb-2">💳</div>
                         <div className="font-medium">Tarjeta de Crédito</div>
-                        <div className="text-xs text-gray-500">Pago con tarjeta</div>
+                        <div className="text-xs text-gray-500">
+                          Pago con tarjeta
+                        </div>
                       </div>
                     </button>
                     <button
@@ -520,7 +558,9 @@ const AppointmentsPage: React.FC = () => {
                       <div className="text-center">
                         <div className="text-2xl mb-2">💵</div>
                         <div className="font-medium">Efectivo</div>
-                        <div className="text-xs text-gray-500">Pago en efectivo</div>
+                        <div className="text-xs text-gray-500">
+                          Pago en efectivo
+                        </div>
                       </div>
                     </button>
                   </div>
@@ -582,7 +622,9 @@ const AppointmentsPage: React.FC = () => {
                             onChange={(e) =>
                               setPaymentData({
                                 ...paymentData,
-                                cvv: e.target.value.replace(/\D/g, "").slice(0, 4),
+                                cvv: e.target.value
+                                  .replace(/\D/g, "")
+                                  .slice(0, 4),
                               })
                             }
                             maxLength={4}
@@ -618,9 +660,12 @@ const AppointmentsPage: React.FC = () => {
                         <div className="flex items-center">
                           <div className="text-green-600 text-xl mr-3">💵</div>
                           <div>
-                            <h5 className="font-medium text-green-800">Pago en Efectivo</h5>
+                            <h5 className="font-medium text-green-800">
+                              Pago en Efectivo
+                            </h5>
                             <p className="text-sm text-green-600">
-                              El veterinario recibirá el pago al momento de la consulta
+                              El veterinario recibirá el pago al momento de la
+                              consulta
                             </p>
                           </div>
                         </div>
@@ -631,7 +676,9 @@ const AppointmentsPage: React.FC = () => {
                           Monto que recibirá el veterinario *
                         </label>
                         <div className="relative">
-                          <span className="absolute left-3 top-2 text-gray-500">$</span>
+                          <span className="absolute left-3 top-2 text-gray-500">
+                            $
+                          </span>
                           <input
                             type="number"
                             placeholder="0"
@@ -646,16 +693,26 @@ const AppointmentsPage: React.FC = () => {
                             required
                             className="w-full pl-8 pr-12 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
                           />
-                          <span className="absolute right-3 top-2 text-gray-500 text-sm">COP</span>
+                          <span className="absolute right-3 top-2 text-gray-500 text-sm">
+                            COP
+                          </span>
                         </div>
                         <p className="text-xs text-gray-500 mt-1">
-                          Mínimo: ${selectedAppointment.price.toLocaleString()} COP
+                          Mínimo: ${selectedAppointment.price.toLocaleString()}{" "}
+                          COP
                         </p>
-                        {cashPaymentData.receivedAmount && parseFloat(cashPaymentData.receivedAmount) > selectedAppointment.price && (
-                          <p className="text-sm text-green-600 mt-1">
-                            Cambio: ${(parseFloat(cashPaymentData.receivedAmount) - selectedAppointment.price).toLocaleString()} COP
-                          </p>
-                        )}
+                        {cashPaymentData.receivedAmount &&
+                          parseFloat(cashPaymentData.receivedAmount) >
+                            selectedAppointment.price && (
+                            <p className="text-sm text-green-600 mt-1">
+                              Cambio: $
+                              {(
+                                parseFloat(cashPaymentData.receivedAmount) -
+                                selectedAppointment.price
+                              ).toLocaleString()}{" "}
+                              COP
+                            </p>
+                          )}
                       </div>
 
                       <div>
@@ -680,11 +737,21 @@ const AppointmentsPage: React.FC = () => {
                         <div className="flex">
                           <div className="text-amber-600 text-lg mr-2">ℹ️</div>
                           <div className="text-sm text-amber-700">
-                            <p className="font-medium mb-1">Información importante:</p>
+                            <p className="font-medium mb-1">
+                              Información importante:
+                            </p>
                             <ul className="text-xs space-y-1">
-                              <li>• El pago se realizará directamente al veterinario</li>
-                              <li>• Asegúrate de tener el monto exacto o superior</li>
-                              <li>• El veterinario confirmará el pago al finalizar el servicio</li>
+                              <li>
+                                • El pago se realizará directamente al
+                                veterinario
+                              </li>
+                              <li>
+                                • Asegúrate de tener el monto exacto o superior
+                              </li>
+                              <li>
+                                • El veterinario confirmará el pago al finalizar
+                                el servicio
+                              </li>
                             </ul>
                           </div>
                         </div>

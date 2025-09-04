@@ -1,31 +1,42 @@
-import Database from 'better-sqlite3';
-import path from 'path';
+/**
+ * Archivo: backend/src/database/connection.ts
+ * Descripción: Configuración y conexión a la base de datos SQLite
+ * Propósito: Establecer conexión DB, crear esquemas y gestionar migraciones
+ */
 
+import Database from 'better-sqlite3'; // Librería SQLite3 de alto rendimiento
+import path from 'path'; // Utilidad para manejo de rutas de archivos
+
+// Construir ruta absoluta al archivo de base de datos
 const dbPath = path.join(process.cwd(), 'veterinaria.db');
+// Crear conexión a la base de datos SQLite
 const db = new Database(dbPath);
 
-// Configurar WAL mode para mejor performance
+// Configurar WAL mode (Write-Ahead Logging) para mejor performance en lecturas concurrentes
 db.pragma('journal_mode = WAL');
 
-// Crear todas las tablas del sistema veterinario
+/**
+ * Función que crea todas las tablas del sistema veterinario
+ * Se ejecuta al inicializar el servidor para asegurar esquema correcto
+ */
 const createTables = () => {
-  // Tabla de usuarios (clientes)
+  // Tabla de usuarios (clientes del sistema veterinario)
   db.exec(`
     CREATE TABLE IF NOT EXISTS users (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      first_name TEXT NOT NULL,
-      last_name TEXT NOT NULL,
-      email TEXT UNIQUE NOT NULL,
-      password_hash TEXT NOT NULL,
-      phone TEXT,
-      address TEXT,
-      date_of_birth DATE,
-      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-      updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+      id INTEGER PRIMARY KEY AUTOINCREMENT, -- ID único autogenerado
+      first_name TEXT NOT NULL, -- Nombre obligatorio
+      last_name TEXT NOT NULL, -- Apellido obligatorio
+      email TEXT UNIQUE NOT NULL, -- Email único para autenticación
+      password_hash TEXT NOT NULL, -- Contraseña encriptada con bcrypt
+      phone TEXT, -- Teléfono opcional para contacto
+      address TEXT, -- Dirección para servicios a domicilio
+      date_of_birth DATE, -- Fecha nacimiento para contexto
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP, -- Timestamp creación automático
+      updated_at DATETIME DEFAULT CURRENT_TIMESTAMP -- Timestamp actualización automático
     )
   `);
 
-  // Tabla de mascotas (pacientes)
+  // Tabla de mascotas (pacientes veterinarios)
   db.exec(`
     CREATE TABLE IF NOT EXISTS pets (
       id INTEGER PRIMARY KEY AUTOINCREMENT,

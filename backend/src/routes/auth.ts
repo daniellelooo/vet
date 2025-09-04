@@ -1,3 +1,20 @@
+/**
+ * CONTROLADOR DE AUTENTICACIÓN - PATRÓN MVC
+ * =========================================
+ * Este archivo implementa el Controlador en el patrón MVC para la autenticación.
+ * 
+ * Responsabilidades:
+ * - Procesar requests HTTP relacionados con autenticación
+ * - Validar datos de entrada
+ * - Interactuar con el Modelo (base de datos)
+ * - Enviar respuestas JSON al cliente (Vista - Frontend React)
+ * 
+ * Endpoints disponibles:
+ * - POST /api/auth/register - Registro de nuevos usuarios
+ * - POST /api/auth/login - Inicio de sesión
+ * - GET /api/auth/me - Obtener datos del usuario autenticado
+ */
+
 import express from 'express';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
@@ -7,6 +24,9 @@ import { User, RegisterRequest, LoginRequest, AuthResponse } from '../models/typ
 
 const router = express.Router();
 
+// ================================
+// REGISTRO DE USUARIOS
+// ================================
 // POST /api/auth/register
 router.post('/register', async (req, res) => {
   try {

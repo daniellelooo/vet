@@ -1,3 +1,5 @@
+// Contexto de autenticación para manejar el estado del usuario
+// Comunicación entre Frontend (puerto 5173) y Backend (puerto 3000)
 import React, { createContext, useState, useEffect } from "react";
 import type { ReactNode } from "react";
 
@@ -34,12 +36,11 @@ interface AuthProviderProps {
 
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState(true);
-
+  const [loading, setLoading] = useState(true); // Verificar token almacenado al cargar la aplicación
   useEffect(() => {
     const token = localStorage.getItem("token");
     if (token) {
-      // Verificar token válido
+      // Verificar si el token JWT es válido con el backend
       fetch("http://localhost:3000/api/auth/me", {
         headers: {
           Authorization: `Bearer ${token}`,
@@ -65,8 +66,10 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
   }, []);
 
+  // Función de login - Comunicación con el backend
   const login = async (email: string, password: string): Promise<boolean> => {
     try {
+      // Enviar credenciales al backend
       const response = await fetch("http://localhost:3000/api/auth/login", {
         method: "POST",
         headers: {
@@ -75,9 +78,11 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         body: JSON.stringify({ email, password }),
       });
 
+      // Procesar respuesta del backend
       const data = await response.json();
 
       if (response.ok) {
+        // Guardar token y actualizar estado
         localStorage.setItem("token", data.token);
         setUser(data.user);
         return true;

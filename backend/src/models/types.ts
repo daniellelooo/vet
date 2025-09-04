@@ -1,53 +1,61 @@
-// Interfaces para el sistema veterinario
+/**
+ * Archivo: backend/src/models/types.ts
+ * Descripción: Definición de interfaces TypeScript para el sistema veterinario
+ * Propósito: Proveer tipado estático y estructura de datos consistente
+ */
 
+// Interface que define la estructura de un usuario/cliente del sistema
 export interface User {
-  id?: number;
-  first_name: string;
-  last_name: string;
-  email: string;
-  password_hash?: string;
-  phone?: string;
-  address?: string;
-  date_of_birth?: string;
-  created_at?: string;
-  updated_at?: string;
+  id?: number; // ID único autogenerado (opcional en creación)
+  first_name: string; // Nombre del usuario
+  last_name: string; // Apellido del usuario
+  email: string; // Email único para login
+  password_hash?: string; // Contraseña encriptada (opcional en respuestas)
+  phone?: string; // Número telefónico (opcional)
+  address?: string; // Dirección para servicios a domicilio (opcional)
+  date_of_birth?: string; // Fecha de nacimiento en formato ISO (opcional)
+  created_at?: string; // Timestamp de creación (autogenerado)
+  updated_at?: string; // Timestamp de última actualización (autogenerado)
 }
 
+// Interface que define la estructura de una mascota/paciente
 export interface Pet {
-  id?: number;
-  user_id: number;
-  name: string;
-  species: string;
-  breed?: string;
-  gender?: 'macho' | 'hembra';
-  date_of_birth?: string;
-  weight?: number;
-  color?: string;
-  microchip_number?: string;
-  medical_history?: string;
-  allergies?: string;
-  current_medications?: string;
-  created_at?: string;
-  updated_at?: string;
+  id?: number; // ID único autogenerado
+  user_id: number; // FK que referencia al dueño (users.id)
+  name: string; // Nombre de la mascota
+  species: string; // Especie (Perro, Gato, Ave, etc.)
+  breed?: string; // Raza específica (opcional)
+  gender?: 'macho' | 'hembra'; // Género con valores específicos
+  date_of_birth?: string; // Fecha de nacimiento (opcional)
+  weight?: number; // Peso en kilogramos (opcional)
+  color?: string; // Color del pelaje/plumaje (opcional)
+  microchip_number?: string; // Número de microchip si tiene (opcional)
+  medical_history?: string; // Historial médico previo (opcional)
+  allergies?: string; // Alergias conocidas (opcional)
+  current_medications?: string; // Medicamentos actuales (opcional)
+  created_at?: string; // Timestamp de registro
+  updated_at?: string; // Timestamp de última actualización
 }
 
+// Interface que define la estructura de un veterinario
 export interface Veterinarian {
-  id?: number;
-  first_name: string;
-  last_name: string;
-  email: string;
-  phone?: string;
-  license_number: string;
-  specialization?: string;
-  years_experience?: number;
-  education?: string;
-  bio?: string;
-  is_active?: boolean;
-  created_at?: string;
+  id?: number; // ID único autogenerado
+  first_name: string; // Nombre del veterinario
+  last_name: string; // Apellido del veterinario
+  email: string; // Email de contacto
+  phone?: string; // Teléfono de contacto (opcional)
+  license_number: string; // Número de licencia profesional único
+  specialization?: string; // Especialidad médica (opcional)
+  years_experience?: number; // Años de experiencia profesional (opcional)
+  education?: string; // Formación académica (opcional)
+  bio?: string; // Biografía profesional (opcional)
+  is_active?: boolean; // Estado activo/inactivo del veterinario
+  created_at?: string; // Timestamp de registro
 }
 
+// Interface que define la estructura de un servicio veterinario
 export interface Service {
-  id?: number;
+  id?: number; // ID único autogenerado
   name: string;
   description?: string;
   price: number;

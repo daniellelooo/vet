@@ -1,24 +1,47 @@
+/**
+ * COMPONENTE LOGIN - VISTA EN PATRÓN MVC
+ * ======================================
+ * Este componente React implementa la Vista en el patrón MVC para la autenticación.
+ *
+ * Responsabilidades:
+ * - Presentar la interfaz de usuario para el login
+ * - Capturar datos de entrada del usuario
+ * - Comunicarse con el backend (Controlador) a través de la función login()
+ * - Mostrar errores y estados de carga
+ * - Navegar a otras vistas según el resultado
+ *
+ * Comunicación Frontend-Backend:
+ * - Frontend (puerto 5173) → Backend (puerto 3000)
+ * - HTTP POST a /api/auth/login
+ * - Recibe JWT token para mantener sesión
+ */
+
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../hooks/useAuth";
 
 const LoginPage: React.FC = () => {
+  // Estados locales para el formulario
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+
+  // Hook personalizado para autenticación
   const { login } = useAuth();
   const navigate = useNavigate();
 
+  // Manejador del formulario - Envía datos al backend
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError("");
 
     try {
+      // Llamada al backend (Controlador) a través del hook useAuth
       const success = await login(email, password);
       if (success) {
-        navigate("/");
+        navigate("/"); // Redirigir al home en caso de éxito
       } else {
         setError("Email o contraseña incorrectos");
       }
