@@ -168,7 +168,10 @@ const PetsPage: React.FC = () => {
     const birthDate = new Date(dateOfBirth);
     let age = today.getFullYear() - birthDate.getFullYear();
     const monthDiff = today.getMonth() - birthDate.getMonth();
-    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+    if (
+      monthDiff < 0 ||
+      (monthDiff === 0 && today.getDate() < birthDate.getDate())
+    ) {
       age--;
     }
     return age;
@@ -329,7 +332,10 @@ const PetsPage: React.FC = () => {
                     type="date"
                     value={formData.date_of_birth}
                     onChange={(e) =>
-                      setFormData({ ...formData, date_of_birth: e.target.value })
+                      setFormData({
+                        ...formData,
+                        date_of_birth: e.target.value,
+                      })
                     }
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
                   />

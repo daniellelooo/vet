@@ -49,6 +49,7 @@ Un sistema completo de gestión veterinaria que permite a los usuarios agendar c
 ## 🛠️ Tecnologías Utilizadas
 
 ### Frontend
+
 - **React 19.1.1** - Framework de JavaScript moderno
 - **TypeScript** - Tipado estático
 - **Vite 7.1.4** - Build tool ultrarrápido
@@ -57,6 +58,7 @@ Un sistema completo de gestión veterinaria que permite a los usuarios agendar c
 - **React Hooks** - Gestión de estado moderna
 
 ### Backend
+
 - **Node.js** - Runtime de JavaScript
 - **Express.js** - Framework web minimalista
 - **TypeScript** - Tipado estático en backend
@@ -70,6 +72,7 @@ Un sistema completo de gestión veterinaria que permite a los usuarios agendar c
 - **nodemon** - Auto-restart en desarrollo
 
 ### Herramientas de Desarrollo
+
 - **Concurrently** - Ejecutar múltiples scripts
 - **ts-node** - Ejecutar TypeScript directamente
 - **ESLint** - Linting de código
@@ -130,17 +133,20 @@ vet-funcional/
 ### Pasos de Instalación
 
 1. **Clonar el repositorio**
+
 ```bash
 git clone https://github.com/daniellelooo/vet.git
 cd vet-funcional
 ```
 
 2. **Instalar dependencias del proyecto principal**
+
 ```bash
 npm install
 ```
 
 3. **Instalar dependencias del frontend**
+
 ```bash
 cd frontend
 npm install
@@ -148,6 +154,7 @@ cd ..
 ```
 
 4. **Instalar dependencias del backend**
+
 ```bash
 cd backend
 npm install
@@ -155,6 +162,7 @@ cd ..
 ```
 
 5. **Configurar variables de entorno**
+
 ```bash
 # Crear archivo .env en la carpeta backend
 cd backend
@@ -177,17 +185,20 @@ npm run dev
 ```
 
 Este comando ejecuta:
+
 - Backend en `http://localhost:3000`
 - Frontend en `http://localhost:5173`
 
 ### Ejecutar por Separado
 
 **Solo Backend:**
+
 ```bash
 npm run dev:backend
 ```
 
 **Solo Frontend:**
+
 ```bash
 npm run dev:frontend
 ```
@@ -195,11 +206,13 @@ npm run dev:frontend
 ### Producción
 
 **Build del Frontend:**
+
 ```bash
 npm run build:frontend
 ```
 
 **Iniciar Backend en Producción:**
+
 ```bash
 npm run start:backend
 ```
@@ -209,16 +222,19 @@ npm run start:backend
 El sistema incluye datos de ejemplo para pruebas:
 
 ### Usuario Demo
+
 - **Email**: `maria@demo.com`
 - **Contraseña**: `demo123`
 - **Mascotas**: Max (Perro) y Luna (Gato)
 - **Citas**: 3 citas de ejemplo en diferentes estados
 
 ### Veterinarios Disponibles
+
 - **Dr. Carlos Rodríguez** - Medicina General
 - **Dra. Ana Martínez** - Cirugía Veterinaria
 
 ### Servicios Disponibles
+
 - Consulta General a Domicilio ($80,000)
 - Vacunación a Domicilio ($35,000)
 - Desparasitación ($25,000)
@@ -245,11 +261,13 @@ El sistema incluye datos de ejemplo para pruebas:
 ### 📅 Sistema de Citas
 
 1. **Agendar Cita**:
+
    - Selecciona mascota, veterinario y servicio
    - Elige fecha y hora
    - Confirma la reserva
 
 2. **Estados de Citas**:
+
    - **Programada**: Cita creada, lista para confirmar
    - **Confirmada**: Cita confirmada, lista para pagar
    - **En Progreso**: Veterinario en camino
@@ -402,6 +420,7 @@ GET /api/veterinarians
 ## 🎨 Diseño y UI
 
 ### Paleta de Colores
+
 - **Primary**: Naranja (`#ea580c`, `#fb923c`)
 - **Success**: Verde (`#16a34a`)
 - **Info**: Azul (`#2563eb`)
@@ -410,6 +429,7 @@ GET /api/veterinarians
 - **Neutral**: Grises (`#374151`, `#6b7280`, `#9ca3af`)
 
 ### Componentes
+
 - **Cards**: Diseño con sombras y bordes redondeados
 - **Buttons**: Estados hover y focus con transiciones
 - **Forms**: Validación visual y mensajes de error
@@ -417,6 +437,7 @@ GET /api/veterinarians
 - **Navigation**: Menú responsivo con estados activos
 
 ### Responsive Design
+
 - **Mobile First**: Diseño optimizado para móviles
 - **Breakpoints**: sm (640px), md (768px), lg (1024px), xl (1280px)
 - **Grid System**: CSS Grid y Flexbox para layouts
@@ -427,22 +448,27 @@ GET /api/veterinarians
 ### Medidas Implementadas
 
 1. **Autenticación JWT**
+
    - Tokens seguros con expiración
    - Middleware de verificación en rutas protegidas
 
 2. **Encriptación**
+
    - Contraseñas hasheadas con bcrypt (rounds: 10)
    - No almacenamiento de passwords en texto plano
 
 3. **Headers de Seguridad**
+
    - Helmet.js para headers HTTP seguros
    - CORS configurado correctamente
 
 4. **Rate Limiting**
+
    - Límite de 100 requests por 15 minutos
    - Protección contra ataques DDoS
 
 5. **Validación de Datos**
+
    - Sanitización en frontend y backend
    - Verificación de tipos y formatos
 
@@ -471,7 +497,7 @@ npm run dev
 # Solo backend
 npm run dev:backend
 
-# Solo frontend  
+# Solo frontend
 npm run dev:frontend
 
 # Build de producción
@@ -522,6 +548,7 @@ npm run build
 ### Esquema de Tablas
 
 **users**
+
 - id (INTEGER PRIMARY KEY)
 - first_name, last_name (VARCHAR)
 - email (UNIQUE), password (VARCHAR)
@@ -529,6 +556,7 @@ npm run build
 - created_at, updated_at (DATETIME)
 
 **pets**
+
 - id (INTEGER PRIMARY KEY)
 - user_id (FOREIGN KEY)
 - name, species, breed (VARCHAR)
@@ -538,6 +566,7 @@ npm run build
 - created_at, updated_at (DATETIME)
 
 **veterinarians**
+
 - id (INTEGER PRIMARY KEY)
 - first_name, last_name (VARCHAR)
 - specialization, phone, email (VARCHAR)
@@ -545,6 +574,7 @@ npm run build
 - created_at, updated_at (DATETIME)
 
 **services**
+
 - id (INTEGER PRIMARY KEY)
 - name, description (VARCHAR/TEXT)
 - price (DECIMAL)
@@ -552,6 +582,7 @@ npm run build
 - created_at, updated_at (DATETIME)
 
 **appointments**
+
 - id (INTEGER PRIMARY KEY)
 - user_id, pet_id, veterinarian_id, service_id (FOREIGN KEYS)
 - appointment_date, appointment_time (VARCHAR)
@@ -561,6 +592,7 @@ npm run build
 - created_at, updated_at (DATETIME)
 
 ### Relaciones
+
 - users 1:N pets
 - users 1:N appointments
 - pets 1:N appointments
@@ -570,6 +602,7 @@ npm run build
 ## 🧪 Testing
 
 ### Funcionalidades Probadas
+
 - ✅ Registro y login de usuarios
 - ✅ CRUD completo de mascotas
 - ✅ Creación y listado de citas
@@ -582,6 +615,7 @@ npm run build
 - ✅ Middleware de seguridad
 
 ### Casos de Prueba
+
 1. **Flujo completo**: Registro → Login → Crear Mascota → Agendar Cita → Confirmar → Pagar
 2. **Edición de mascotas**: Modificar todos los campos disponibles
 3. **Manejo de errores**: Campos vacíos, datos inválidos
@@ -621,16 +655,19 @@ style(ui): mejorar diseño responsive
 ## 🚀 Despliegue
 
 ### Frontend (Netlify/Vercel)
+
 1. Build: `npm run build:frontend`
 2. Deploy carpeta `frontend/dist`
 3. Configurar redirects para SPA
 
 ### Backend (Railway/Heroku)
+
 1. Variables de entorno en producción
 2. Base de datos persistente
 3. CORS configurado para dominio de producción
 
 ### Variables de Producción
+
 ```bash
 PORT=3000
 JWT_SECRET=secret_produccion_muy_seguro
@@ -685,6 +722,7 @@ SOFTWARE.
 ---
 
 ⭐ **¡Dale una estrella al repositorio si te gustó el proyecto!** ⭐
+
 - **TypeScript 5.8.3** - Superset tipado de JavaScript
 - **Vite 7.1.4** - Build tool y dev server ultra-rápido
 - **Tailwind CSS 3.x** - Framework de CSS utilitario

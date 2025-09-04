@@ -21,12 +21,18 @@ const AppointmentsPage: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [showPaymentModal, setShowPaymentModal] = useState(false);
-  const [selectedAppointment, setSelectedAppointment] = useState<Appointment | null>(null);
+  const [selectedAppointment, setSelectedAppointment] =
+    useState<Appointment | null>(null);
   const [paymentData, setPaymentData] = useState({
     cardNumber: "",
     expiryDate: "",
     cvv: "",
     name: "",
+  });
+  const [paymentMethod, setPaymentMethod] = useState<"credit_card" | "cash">("credit_card");
+  const [cashPaymentData, setCashPaymentData] = useState({
+    receivedAmount: "",
+    notes: "",
   });
   const [isProcessing, setIsProcessing] = useState(false);
   const { user } = useAuth();
@@ -114,6 +120,9 @@ const AppointmentsPage: React.FC = () => {
 
   const handlePaymentClick = (appointment: Appointment) => {
     setSelectedAppointment(appointment);
+    setPaymentMethod("credit_card");
+    setPaymentData({ cardNumber: "", expiryDate: "", cvv: "", name: "" });
+    setCashPaymentData({ receivedAmount: "", notes: "" });
     setShowPaymentModal(true);
   };
 
@@ -122,8 +131,24 @@ const AppointmentsPage: React.FC = () => {
     setIsProcessing(true);
 
     try {
+      // Validaciones específicas por método de pago
+      if (paymentMethod === "credit_card") {
+        if (!paymentData.cardNumber || !paymentData.expiryDate || !paymentData.cvv || !paymentData.name) {
+          alert("Por favor, completa todos los campos de la tarjeta");
+          setIsProcessing(false);
+          return;
+        }
+      } else if (paymentMethod === "cash") {
+        const receivedAmount = parseFloat(cashPaymentData.receivedAmount);
+        if (!receivedAmount || receivedAmount < (selectedAppointment?.price || 0)) {
+          alert(`El monto recibido debe ser al menos $${selectedAppointment?.price?.toLocaleString()} COP`);
+          setIsProcessing(false);
+          return;
+        }
+      }
+
       // Simulación de procesamiento de pago
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      await new Promise((resolve) => setTimeout(resolve, 2000));
 
       // Actualizar el payment_status en el backend
       const token = localStorage.getItem("token");
@@ -135,18 +160,33 @@ const AppointmentsPage: React.FC = () => {
             "Content-Type": "application/json",
             Authorization: `Bearer ${token}`,
           },
-          body: JSON.stringify({ 
+          body: JSON.stringify({
             payment_status: "paid",
-            payment_method: "credit_card",
-            payment_amount: selectedAppointment?.price
+            payment_method: paymentMethod,
+            payment_amount: selectedAppointment?.price,
+            ...(paymentMethod === "cash" && {
+              cash_received: parseFloat(cashPaymentData.receivedAmount),
+              cash_change: parseFloat(cashPaymentData.receivedAmount) - (selectedAppointment?.price || 0),
+              payment_notes: cashPaymentData.notes
+            })
           }),
         }
       );
 
       if (response.ok) {
-        alert(`¡Pago exitoso! Se han cobrado $${selectedAppointment?.price.toLocaleString()} COP`);
+        if (paymentMethod === "credit_card") {
+          alert(
+            `¡Pago con tarjeta exitoso! Se han cobrado $${selectedAppointment?.price.toLocaleString()} COP`
+          );
+        } else {
+          const change = parseFloat(cashPaymentData.receivedAmount) - (selectedAppointment?.price || 0);
+          alert(
+            `¡Pago en efectivo exitoso!\nTotal: $${selectedAppointment?.price.toLocaleString()} COP\nRecibido: $${parseFloat(cashPaymentData.receivedAmount).toLocaleString()} COP\nCambio: $${change.toLocaleString()} COP`
+          );
+        }
         setShowPaymentModal(false);
         setPaymentData({ cardNumber: "", expiryDate: "", cvv: "", name: "" });
+        setCashPaymentData({ receivedAmount: "", notes: "" });
         fetchAppointments(); // Recargar citas
       } else {
         alert("Error al procesar el pago");
@@ -160,24 +200,24 @@ const AppointmentsPage: React.FC = () => {
   };
 
   const formatCardNumber = (value: string) => {
-    const v = value.replace(/\s+/g, '').replace(/[^0-9]/gi, '');
+    const v = value.replace(/\s+/g, "").replace(/[^0-9]/gi, "");
     const matches = v.match(/\d{4,16}/g);
-    const match = matches && matches[0] || '';
+    const match = (matches && matches[0]) || "";
     const parts = [];
     for (let i = 0, len = match.length; i < len; i += 4) {
       parts.push(match.substring(i, i + 4));
     }
     if (parts.length) {
-      return parts.join(' ');
+      return parts.join(" ");
     } else {
       return v;
     }
   };
 
   const formatExpiryDate = (value: string) => {
-    const v = value.replace(/\s+/g, '').replace(/[^0-9]/gi, '');
+    const v = value.replace(/\s+/g, "").replace(/[^0-9]/gi, "");
     if (v.length >= 2) {
-      return v.substring(0, 2) + '/' + v.substring(2, 4);
+      return v.substring(0, 2) + "/" + v.substring(2, 4);
     }
     return v;
   };
@@ -331,7 +371,9 @@ const AppointmentsPage: React.FC = () => {
                           📅 Cita programada
                         </span>
                         <button
-                          onClick={() => handleConfirmAppointment(appointment.id)}
+                          onClick={() =>
+                            handleConfirmAppointment(appointment.id)
+                          }
                           className="text-sm text-blue-600 bg-blue-50 hover:bg-blue-100 px-3 py-1 rounded-full transition-colors border border-blue-200"
                         >
                           ✅ Confirmar Cita
@@ -343,7 +385,8 @@ const AppointmentsPage: React.FC = () => {
                         <span className="text-sm text-blue-600 bg-blue-50 px-3 py-1 rounded-full">
                           ✅ Cita confirmada - Te contactaremos pronto
                         </span>
-                        {(!appointment.payment_status || appointment.payment_status === 'pending') && (
+                        {(!appointment.payment_status ||
+                          appointment.payment_status === "pending") && (
                           <button
                             onClick={() => handlePaymentClick(appointment)}
                             className="text-sm text-emerald-600 bg-emerald-50 hover:bg-emerald-100 px-3 py-1 rounded-full transition-colors border border-emerald-200"
@@ -351,7 +394,7 @@ const AppointmentsPage: React.FC = () => {
                             💳 Pagar Cita
                           </button>
                         )}
-                        {appointment.payment_status === 'paid' && (
+                        {appointment.payment_status === "paid" && (
                           <span className="text-sm text-green-600 bg-green-50 px-3 py-1 rounded-full">
                             💰 Pagado
                           </span>
@@ -407,7 +450,9 @@ const AppointmentsPage: React.FC = () => {
             <div className="bg-white rounded-xl shadow-2xl max-w-md w-full max-h-[90vh] overflow-y-auto">
               <div className="p-6">
                 <div className="flex justify-between items-center mb-6">
-                  <h3 className="text-xl font-bold text-gray-900">Pago de Cita</h3>
+                  <h3 className="text-xl font-bold text-gray-900">
+                    Pago de Cita
+                  </h3>
                   <button
                     onClick={() => setShowPaymentModal(false)}
                     className="text-gray-400 hover:text-gray-600 text-2xl"
@@ -418,113 +463,262 @@ const AppointmentsPage: React.FC = () => {
 
                 {/* Appointment Summary */}
                 <div className="bg-orange-50 rounded-lg p-4 mb-6">
-                  <h4 className="font-semibold text-gray-900 mb-2">Resumen de la Cita</h4>
+                  <h4 className="font-semibold text-gray-900 mb-2">
+                    Resumen de la Cita
+                  </h4>
                   <div className="space-y-1 text-sm text-gray-600">
-                    <p><span className="font-medium">Servicio:</span> {selectedAppointment.service_name}</p>
-                    <p><span className="font-medium">Veterinario:</span> {selectedAppointment.veterinarian_name}</p>
-                    <p><span className="font-medium">Mascota:</span> {selectedAppointment.pet_name}</p>
-                    <p><span className="font-medium">Fecha:</span> {formatDate(selectedAppointment.appointment_date)}</p>
+                    <p>
+                      <span className="font-medium">Servicio:</span>{" "}
+                      {selectedAppointment.service_name}
+                    </p>
+                    <p>
+                      <span className="font-medium">Veterinario:</span>{" "}
+                      {selectedAppointment.veterinarian_name}
+                    </p>
+                    <p>
+                      <span className="font-medium">Mascota:</span>{" "}
+                      {selectedAppointment.pet_name}
+                    </p>
+                    <p>
+                      <span className="font-medium">Fecha:</span>{" "}
+                      {formatDate(selectedAppointment.appointment_date)}
+                    </p>
                     <p className="text-lg font-bold text-orange-600 mt-2">
                       Total: ${selectedAppointment.price.toLocaleString()} COP
                     </p>
                   </div>
                 </div>
 
+                {/* Payment Method Selection */}
+                <div className="mb-6">
+                  <h4 className="font-medium text-gray-900 mb-3">Método de Pago</h4>
+                  <div className="grid grid-cols-2 gap-3">
+                    <button
+                      type="button"
+                      onClick={() => setPaymentMethod("credit_card")}
+                      className={`p-4 rounded-lg border-2 transition-all duration-200 ${
+                        paymentMethod === "credit_card"
+                          ? "border-orange-500 bg-orange-50 text-orange-700"
+                          : "border-gray-200 hover:border-gray-300"
+                      }`}
+                    >
+                      <div className="text-center">
+                        <div className="text-2xl mb-2">💳</div>
+                        <div className="font-medium">Tarjeta de Crédito</div>
+                        <div className="text-xs text-gray-500">Pago con tarjeta</div>
+                      </div>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setPaymentMethod("cash")}
+                      className={`p-4 rounded-lg border-2 transition-all duration-200 ${
+                        paymentMethod === "cash"
+                          ? "border-orange-500 bg-orange-50 text-orange-700"
+                          : "border-gray-200 hover:border-gray-300"
+                      }`}
+                    >
+                      <div className="text-center">
+                        <div className="text-2xl mb-2">💵</div>
+                        <div className="font-medium">Efectivo</div>
+                        <div className="text-xs text-gray-500">Pago en efectivo</div>
+                      </div>
+                    </button>
+                  </div>
+                </div>
+
                 {/* Payment Form */}
                 <form onSubmit={handlePaymentSubmit} className="space-y-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Número de Tarjeta
-                    </label>
-                    <input
-                      type="text"
-                      placeholder="1234 5678 9012 3456"
-                      value={paymentData.cardNumber}
-                      onChange={(e) => setPaymentData({
-                        ...paymentData,
-                        cardNumber: formatCardNumber(e.target.value)
-                      })}
-                      maxLength={19}
-                      required
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
-                    />
-                  </div>
+                  {paymentMethod === "credit_card" ? (
+                    <>
+                      {/* Credit Card Form */}
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          Número de Tarjeta
+                        </label>
+                        <input
+                          type="text"
+                          placeholder="1234 5678 9012 3456"
+                          value={paymentData.cardNumber}
+                          onChange={(e) =>
+                            setPaymentData({
+                              ...paymentData,
+                              cardNumber: formatCardNumber(e.target.value),
+                            })
+                          }
+                          maxLength={19}
+                          required
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                        />
+                      </div>
 
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Fecha de Vencimiento
-                      </label>
-                      <input
-                        type="text"
-                        placeholder="MM/AA"
-                        value={paymentData.expiryDate}
-                        onChange={(e) => setPaymentData({
-                          ...paymentData,
-                          expiryDate: formatExpiryDate(e.target.value)
-                        })}
-                        maxLength={5}
-                        required
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        CVV
-                      </label>
-                      <input
-                        type="text"
-                        placeholder="123"
-                        value={paymentData.cvv}
-                        onChange={(e) => setPaymentData({
-                          ...paymentData,
-                          cvv: e.target.value.replace(/\D/g, '').slice(0, 4)
-                        })}
-                        maxLength={4}
-                        required
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
-                      />
-                    </div>
-                  </div>
+                      <div className="grid grid-cols-2 gap-4">
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">
+                            Fecha de Vencimiento
+                          </label>
+                          <input
+                            type="text"
+                            placeholder="MM/AA"
+                            value={paymentData.expiryDate}
+                            onChange={(e) =>
+                              setPaymentData({
+                                ...paymentData,
+                                expiryDate: formatExpiryDate(e.target.value),
+                              })
+                            }
+                            maxLength={5}
+                            required
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">
+                            CVV
+                          </label>
+                          <input
+                            type="text"
+                            placeholder="123"
+                            value={paymentData.cvv}
+                            onChange={(e) =>
+                              setPaymentData({
+                                ...paymentData,
+                                cvv: e.target.value.replace(/\D/g, "").slice(0, 4),
+                              })
+                            }
+                            maxLength={4}
+                            required
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                          />
+                        </div>
+                      </div>
 
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Nombre del Titular
-                    </label>
-                    <input
-                      type="text"
-                      placeholder="Como aparece en la tarjeta"
-                      value={paymentData.name}
-                      onChange={(e) => setPaymentData({
-                        ...paymentData,
-                        name: e.target.value
-                      })}
-                      required
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
-                    />
-                  </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          Nombre del Titular
+                        </label>
+                        <input
+                          type="text"
+                          placeholder="Como aparece en la tarjeta"
+                          value={paymentData.name}
+                          onChange={(e) =>
+                            setPaymentData({
+                              ...paymentData,
+                              name: e.target.value,
+                            })
+                          }
+                          required
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                        />
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      {/* Cash Payment Form */}
+                      <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-4">
+                        <div className="flex items-center">
+                          <div className="text-green-600 text-xl mr-3">💵</div>
+                          <div>
+                            <h5 className="font-medium text-green-800">Pago en Efectivo</h5>
+                            <p className="text-sm text-green-600">
+                              El veterinario recibirá el pago al momento de la consulta
+                            </p>
+                          </div>
+                        </div>
+                      </div>
 
-                  <div className="flex gap-3 mt-6">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          Monto que recibirá el veterinario *
+                        </label>
+                        <div className="relative">
+                          <span className="absolute left-3 top-2 text-gray-500">$</span>
+                          <input
+                            type="number"
+                            placeholder="0"
+                            value={cashPaymentData.receivedAmount}
+                            onChange={(e) =>
+                              setCashPaymentData({
+                                ...cashPaymentData,
+                                receivedAmount: e.target.value,
+                              })
+                            }
+                            min={selectedAppointment.price}
+                            required
+                            className="w-full pl-8 pr-12 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                          />
+                          <span className="absolute right-3 top-2 text-gray-500 text-sm">COP</span>
+                        </div>
+                        <p className="text-xs text-gray-500 mt-1">
+                          Mínimo: ${selectedAppointment.price.toLocaleString()} COP
+                        </p>
+                        {cashPaymentData.receivedAmount && parseFloat(cashPaymentData.receivedAmount) > selectedAppointment.price && (
+                          <p className="text-sm text-green-600 mt-1">
+                            Cambio: ${(parseFloat(cashPaymentData.receivedAmount) - selectedAppointment.price).toLocaleString()} COP
+                          </p>
+                        )}
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          Notas adicionales (opcional)
+                        </label>
+                        <textarea
+                          placeholder="Ej: Billetes de denominación específica, instrucciones especiales..."
+                          value={cashPaymentData.notes}
+                          onChange={(e) =>
+                            setCashPaymentData({
+                              ...cashPaymentData,
+                              notes: e.target.value,
+                            })
+                          }
+                          rows={3}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent resize-none"
+                        />
+                      </div>
+
+                      <div className="bg-amber-50 border border-amber-200 rounded-lg p-3">
+                        <div className="flex">
+                          <div className="text-amber-600 text-lg mr-2">ℹ️</div>
+                          <div className="text-sm text-amber-700">
+                            <p className="font-medium mb-1">Información importante:</p>
+                            <ul className="text-xs space-y-1">
+                              <li>• El pago se realizará directamente al veterinario</li>
+                              <li>• Asegúrate de tener el monto exacto o superior</li>
+                              <li>• El veterinario confirmará el pago al finalizar el servicio</li>
+                            </ul>
+                          </div>
+                        </div>
+                      </div>
+                    </>
+                  )}
+
+                  {/* Submit Button */}
+                  <div className="flex gap-3 pt-4">
                     <button
                       type="button"
                       onClick={() => setShowPaymentModal(false)}
-                      className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
+                      className="flex-1 px-4 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors duration-200"
                     >
                       Cancelar
                     </button>
                     <button
                       type="submit"
                       disabled={isProcessing}
-                      className="flex-1 px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                      className="flex-1 bg-orange-600 hover:bg-orange-700 text-white px-4 py-3 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
                     >
-                      {isProcessing ? 'Procesando...' : 'Pagar Ahora'}
+                      {isProcessing ? (
+                        <span className="flex items-center justify-center">
+                          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                          Procesando...
+                        </span>
+                      ) : paymentMethod === "credit_card" ? (
+                        "Pagar con Tarjeta"
+                      ) : (
+                        "Confirmar Pago en Efectivo"
+                      )}
                     </button>
                   </div>
                 </form>
-
-                <div className="mt-4 text-xs text-gray-500 text-center">
-                  🔒 Simulación de pago seguro - No se procesarán pagos reales
-                </div>
               </div>
             </div>
           </div>

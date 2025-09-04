@@ -362,10 +362,13 @@ const validateAppointmentDate = (date: string): boolean => {
 };
 ```
 
-### 2. Simulador de Pagos
-- Formulario de tarjeta de crédito con validación
-- Integración con el flujo de citas
-- Confirmación de pago simulada
+### 2. Simulador de Pagos Dual
+- **Pago con Tarjeta**: Formulario de tarjeta de crédito con validación
+- **Pago en Efectivo**: Opción de pago directo al veterinario
+- **Cálculo automático de cambio** para pagos en efectivo
+- **Validación de montos** mínimos según el servicio
+- **Integración con el flujo de citas**
+- **Confirmación de pago** con detalles específicos según método
 
 ### 3. Gestión de Estados de Citas
 - **Pendiente**: Cita creada, esperando confirmación
@@ -377,6 +380,51 @@ const validateAppointmentDate = (date: string): boolean => {
 - Checkbox para marcar citas de emergencia
 - Recargo automático por servicios nocturnos
 - Priorización en la agenda
+
+### 5. Implementación del Pago en Efectivo
+La nueva funcionalidad de pago en efectivo permite a los usuarios seleccionar esta opción como método de pago alternativo:
+
+#### Características del Pago en Efectivo:
+```typescript
+// Estado para manejar pago en efectivo
+const [paymentMethod, setPaymentMethod] = useState<"credit_card" | "cash">("credit_card");
+const [cashPaymentData, setCashPaymentData] = useState({
+  receivedAmount: "",
+  notes: "",
+});
+
+// Validación específica para efectivo
+if (paymentMethod === "cash") {
+  const receivedAmount = parseFloat(cashPaymentData.receivedAmount);
+  if (!receivedAmount || receivedAmount < (selectedAppointment?.price || 0)) {
+    alert(`El monto recibido debe ser al menos $${selectedAppointment?.price?.toLocaleString()} COP`);
+    return;
+  }
+}
+```
+
+#### Funcionalidades Implementadas:
+- **Selector visual** de método de pago (tarjeta vs efectivo)
+- **Validación de monto mínimo** igual al precio del servicio
+- **Cálculo automático de cambio** mostrado en tiempo real
+- **Campo de notas opcionales** para instrucciones especiales
+- **Información contextual** sobre el proceso de pago en efectivo
+- **Confirmación diferenciada** según el método seleccionado
+
+#### Backend Integration:
+```typescript
+// Envío de datos al backend con información adicional para efectivo
+body: JSON.stringify({
+  payment_status: "paid",
+  payment_method: paymentMethod,
+  payment_amount: selectedAppointment?.price,
+  ...(paymentMethod === "cash" && {
+    cash_received: parseFloat(cashPaymentData.receivedAmount),
+    cash_change: parseFloat(cashPaymentData.receivedAmount) - (selectedAppointment?.price || 0),
+    payment_notes: cashPaymentData.notes
+  })
+})
+```
 
 ---
 
