@@ -13,6 +13,33 @@
 - **Responsive**: Diseño que se adapta a diferentes tamaños de pantalla
 
 ---
+### Stack Tecnológico Detallado
+
+#### 🎨 Frontend (Ruta: `/frontend/`)
+
+- **React 19.1.1** - Biblioteca para crear interfaces de usuario reactivas
+- **TypeScript 5.8.3** - Superset de JavaScript con tipado estático para prevenir errores
+- **Vite 7.1.2** - Bundler y herramienta de desarrollo ultra-rápida
+- **React Router 7.8.2** - Librería para navegación entre páginas sin recargas
+- **Tailwind CSS 3.4.17** - Framework CSS basado en clases utilitarias
+- **Axios 1.11.0** - Cliente HTTP para comunicarse con el backend
+
+#### ⚙️ Backend (Ruta: `/backend/`)
+
+- **Node.js + Express 5.1.0** - Runtime de JavaScript y framework web
+- **TypeScript** - Tipado estático para desarrollo backend robusto
+- **Better-SQLite3 12.2.0** - Base de datos SQLite embebida de alto rendimiento
+- **JWT (jsonwebtoken 9.0.2)** - Tokens seguros para autenticación sin estado
+- **bcryptjs 3.0.2** - Librería para hash seguro de contraseñas
+- **CORS 2.8.5** - Middleware para permitir requests cross-origin
+- **Helmet 8.1.0** - Headers de seguridad HTTP
+- **Morgan 1.10.1** - Logger para monitorear requests HTTP
+
+#### 📊 Base de Datos
+
+- **SQLite** - Base de datos relacional embebida (archivo: `veterinaria.db`)
+- **WAL Mode** - Write-Ahead Logging para mejor rendimiento en lecturas concurrentes
+
 
 ## 🏛️ Implementación del Patrón Modelo-Vista-Controlador (MVC)
 
@@ -308,32 +335,6 @@ router.get("/my-appointments", authMiddleware, async (req, res) => {
 });
 ```
 
-### Stack Tecnológico Detallado
-
-#### 🎨 Frontend (Ruta: `/frontend/`)
-
-- **React 19.1.1** - Biblioteca para crear interfaces de usuario reactivas
-- **TypeScript 5.8.3** - Superset de JavaScript con tipado estático para prevenir errores
-- **Vite 7.1.2** - Bundler y herramienta de desarrollo ultra-rápida
-- **React Router 7.8.2** - Librería para navegación entre páginas sin recargas
-- **Tailwind CSS 3.4.17** - Framework CSS basado en clases utilitarias
-- **Axios 1.11.0** - Cliente HTTP para comunicarse con el backend
-
-#### ⚙️ Backend (Ruta: `/backend/`)
-
-- **Node.js + Express 5.1.0** - Runtime de JavaScript y framework web
-- **TypeScript** - Tipado estático para desarrollo backend robusto
-- **Better-SQLite3 12.2.0** - Base de datos SQLite embebida de alto rendimiento
-- **JWT (jsonwebtoken 9.0.2)** - Tokens seguros para autenticación sin estado
-- **bcryptjs 3.0.2** - Librería para hash seguro de contraseñas
-- **CORS 2.8.5** - Middleware para permitir requests cross-origin
-- **Helmet 8.1.0** - Headers de seguridad HTTP
-- **Morgan 1.10.1** - Logger para monitorear requests HTTP
-
-#### 📊 Base de Datos
-
-- **SQLite** - Base de datos relacional embebida (archivo: `veterinaria.db`)
-- **WAL Mode** - Write-Ahead Logging para mejor rendimiento en lecturas concurrentes
 
 ### ⚙️ Configuración y Puesta en Marcha
 
