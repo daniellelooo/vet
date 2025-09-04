@@ -1,0 +1,34 @@
+{
+  "name": "vetcare-app",
+  "version": "1.0.0",
+  "description": "Sistema de gestión veterinaria VetCare - Full Stack Application",
+  "scripts": {
+    "dev": "concurrently \"npm run backend:dev\" \"npm run frontend:dev\"",
+    "backend:dev": "cd backend && npm run dev",
+    "frontend:dev": "cd frontend && npm run dev",
+    "backend:start": "cd backend && npm start",
+    "frontend:build": "cd frontend && npm run build",
+    "frontend:preview": "cd frontend && npm run preview",
+    "install:all": "npm install && cd backend && npm install && cd ../frontend && npm install",
+    "build": "npm run frontend:build",
+    "start": "npm run backend:start"
+  },
+  "keywords": [
+    "veterinary",
+    "management",
+    "react",
+    "nodejs",
+    "express",
+    "sqlite",
+    "typescript"
+  ],
+  "author": "Daniel",
+  "license": "MIT",
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  },
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=9.0.0"
+  }
+}

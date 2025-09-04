@@ -176,45 +176,54 @@ EOL
 
 ## 🚀 Cómo Ejecutar el Proyecto
 
-### Desarrollo (Recomendado)
+### ⚡ Desarrollo - Ejecución Rápida desde la Raíz
 
-Ejecutar frontend y backend simultáneamente:
-
+**Ejecutar TODO el proyecto (Frontend + Backend):**
 ```bash
 npm run dev
 ```
 
-Este comando ejecuta:
+Este comando único ejecuta automáticamente:
+- ✅ Backend en `http://localhost:3000` 
+- ✅ Frontend en `http://localhost:5173`
+- ✅ Ambos en paralelo con un solo comando
 
-- Backend en `http://localhost:3000`
-- Frontend en `http://localhost:5173`
-
-### Ejecutar por Separado
+### 🔧 Comandos Individuales
 
 **Solo Backend:**
-
 ```bash
-npm run dev:backend
+npm run backend:dev
 ```
 
 **Solo Frontend:**
-
 ```bash
-npm run dev:frontend
+npm run frontend:dev
 ```
 
-### Producción
+### 🏗️ Instalación Completa
+
+**Instalar TODAS las dependencias (raíz + backend + frontend):**
+```bash
+npm run install:all
+```
+
+### 📦 Producción
 
 **Build del Frontend:**
-
 ```bash
-npm run build:frontend
+npm run build
 ```
 
 **Iniciar Backend en Producción:**
-
 ```bash
-npm run start:backend
+npm run start
+```
+
+### 🎯 Vista Previa del Build
+
+**Preview del frontend compilado:**
+```bash
+npm run frontend:preview
 ```
 
 ## 👤 Credenciales de Demo
